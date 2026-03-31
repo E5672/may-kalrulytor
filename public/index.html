@@ -1,246 +1,108 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Финансы</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    /* ── Variables ── */
-    :root {
-      --bg:         #0f0f13;
-      --surface:    #1a1a24;
-      --surface2:   #22222f;
-      --border:     rgba(255,255,255,0.07);
-      --text:       #f0f0f5;
-      --text2:      #7a7a95;
-      --text3:      #4a4a62;
-      --green:      #34d399;
-      --green-dim:  rgba(52,211,153,0.12);
-      --red:        #f87171;
-      --red-dim:    rgba(248,113,113,0.12);
-      --yellow:     #facc15;
-      --accent:     #6366f1;
-      --accent-dim: rgba(99,102,241,0.15);
-      --r:          14px;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Финансы</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+/* ── Variables ── */
+:root {
+  --bg: #0f0f13; --surface: #1a1a24; --surface2: #22222f;
+  --border: rgba(255,255,255,0.07);
+  --text: #f0f0f5; --text2: #7a7a95; --text3: #4a4a62;
+  --green: #34d399; --green-dim: rgba(52,211,153,0.12);
+  --red: #f87171; --red-dim: rgba(248,113,113,0.12);
+  --yellow: #facc15; --accent: #6366f1; --accent-dim: rgba(99,102,241,0.15);
+  --r: 14px;
+}
+/* ── Reset ── */
+*, *::before, *::after { box-sizing:border-box;margin:0;padding:0; -webkit-tap-highlight-color:transparent; }
+html { -webkit-font-smoothing: antialiased; }
+body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', system-ui, sans-serif; min-height:100vh; }
+/* ── Layout ── */
+.app { max-width:430px; margin:0 auto; padding:0 0 80px; }
+/* ── Header ── */
+.header { display:flex; align-items:center; justify-content:space-between; padding:18px 16px 12px; }
+.header-title { font-size:22px; font-weight:800; letter-spacing:-0.5px; }
+.header-balance { font-size:15px; font-weight:700; padding:6px 14px; border-radius:20px; background: var(--surface); font-variant-numeric: tabular-nums; transition: color 0.3s; }
+.header-balance.pos { color: var(--green); } .header-balance.neg { color: var(--red); }
+/* ── Tab Bar ── */
+.tabbar { position:fixed; bottom:0; left:0; right:0; background: var(--surface); border-top:1px solid var(--border); display:flex; padding-bottom:env(safe-area-inset-bottom); z-index:100; }
+.tab-btn { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:10px 0; background:none; border:none; color: var(--text3); font-size:10px; font-weight:600; letter-spacing:0.3px; cursor:pointer; font-family:inherit; transition:color 0.2s; }
+.tab-btn.active { color: var(--accent); }
+.tab-btn.active svg { transform: scale(1.15); }
+.tab-btn svg { transition: transform 0.2s; }
+/* ── Pages ── */
+.page { display:none; padding:0 16px; }
+.page.active { display:block; }
+/* ── Cards ── */
+.card { background: var(--surface); border:1px solid var(--border); border-radius: var(--r); padding:16px; margin-bottom:10px; }
+.card-title { font-size:11px; font-weight:700; color: var(--text3); text-transform:uppercase; letter-spacing:1px; margin-bottom:14px; }
+/* ── Type Toggle ── */
+.type-toggle { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:12px; }
+.type-btn { padding:11px; border-radius:10px; border:1px solid var(--border); background:var(--surface2); color:var(--text2); font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; text-align:center; transition: all 0.2s; }
+.type-btn.active.expense { background:var(--red-dim); border-color: rgba(248,113,113,0.3); color: var(--red); }
+.type-btn.active.income { background:var(--green-dim); border-color: rgba(52,211,153,0.3); color: var(--green); }
+/* ── Form Fields ── */
+.field-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px; }
+select,input[type="number"] { width:100%; padding:11px 12px; background:var(--surface2); border:1px solid var(--border); border-radius:10px; color:var(--text); font-size:14px; font-family:inherit; outline:none; appearance:none; -webkit-appearance:none; -moz-appearance:textfield; transition:border-color 0.2s; }
+input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance:none; }
+select:focus,input:focus { border-color:var(--accent); }
+input::placeholder { color:var(--text3); }
+.btn { width:100%; padding:13px; margin-top:8px; border:none; border-radius:10px; background:var(--accent); color:#fff; font-size:15px; font-weight:700; cursor:pointer; font-family:inherit; transition:opacity 0.2s, transform 0.1s; }
+.btn:active { transform:scale(0.98); opacity:0.85; }
+.btn-del { padding:6px 10px; border-radius:8px; border:none; background:var(--red-dim); color:var(--red); font-size:12px; font-weight:700; cursor:pointer; font-family:inherit; flex-shrink:0; }
+/* ── Operation Rows ── */
+.op-row { display:flex; align-items:center; gap:10px; padding:11px 0; border-bottom:1px solid var(--border); animation: fadeIn 0.25s ease; }
+.op-row:last-child { border-bottom:none; }
+.op-icon { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+.op-icon.income { background: var(--green-dim); }
+.op-icon.expense { background: var(--red-dim); }
+.op-info { flex:1; min-width:0; }
+.op-cat { font-size:14px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.op-sector { font-size:11px; color:var(--text2); margin-top:1px; }
+.op-amount { font-size:15px; font-weight:700; font-variant-numeric:tabular-nums; flex-shrink:0; }
+.op-amount.income { color: var(--green); }
+.op-amount.expense { color: var(--red); }
+/* ── Stats Grid ── */
+.stat-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:10px; }
+.stat-box { background: var(--surface); border:1px solid var(--border); border-radius: var(--r); padding:14px 10px; text-align:center; }
+.stat-label { font-size:10px; font-weight:700; color: var(--text3); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; }
+.stat-value { font-size:17px; font-weight:800; letter-spacing:-0.5px; font-variant-numeric:tabular-nums; }
+.stat-value.green { color: var(--green); }
+.stat-value.red { color: var(--red); }
+/* ── Plan Rows ── */
+.plan-row { padding:12px 0; border-bottom:1px solid var(--border); }
+.plan-row:last-child { border-bottom:none; }
+.plan-row-top { display:flex; align-items:center; gap:8px; margin-bottom:7px; }
+.plan-cat { font-size:14px; font-weight:600; flex:1; }
+.plan-amounts { font-size:12px; color: var(--text2); font-variant-numeric: tabular-nums; }
+.plan-amounts b { font-variant-numeric: tabular-nums; }
+.progress-track { height:5px; background: var(--surface2); border-radius:99px; overflow:hidden; }
+.progress-fill { height:100%; border-radius:99px; transition:width 0.4s ease; }
+/* ── Empty / Loading ── */
+.empty { text-align:center; padding:24px; color: var(--text3); font-size:14px; }
+.loading { text-align:center; padding:20px; color: var(--text3); font-size:13px; }
 
-    /* ── Reset ── */
-    *, *::before, *::after {
-      box-sizing: border-box; margin: 0; padding: 0;
-      -webkit-tap-highlight-color: transparent;
-    }
-    html { -webkit-font-smoothing: antialiased; }
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', system-ui, sans-serif;
-      min-height: 100vh;
-    }
-
-    /* ── Layout ── */
-    .app {
-      max-width: 430px;
-      margin: 0 auto;
-      padding: 0 0 80px;
-    }
-
-    /* ── Header ── */
-    .header {
-      display: flex; align-items: center;
-      justify-content: space-between;
-      padding: 18px 16px 12px;
-    }
-    .header-title { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
-    .header-balance {
-      font-size: 15px; font-weight: 700;
-      padding: 6px 14px; border-radius: 20px;
-      background: var(--surface);
-      font-variant-numeric: tabular-nums;
-      transition: color 0.3s;
-    }
-    .header-balance.pos { color: var(--green); }
-    .header-balance.neg { color: var(--red); }
-
-    /* ── Tab Bar ── */
-    .tabbar {
-      position: fixed; bottom: 0; left: 0; right: 0;
-      background: var(--surface);
-      border-top: 1px solid var(--border);
-      display: flex;
-      padding-bottom: env(safe-area-inset-bottom);
-      z-index: 100;
-    }
-    .tab-btn {
-      flex: 1; display: flex; flex-direction: column;
-      align-items: center; gap: 3px;
-      padding: 10px 0;
-      background: none; border: none;
-      color: var(--text3);
-      font-size: 10px; font-weight: 600; letter-spacing: 0.3px;
-      cursor: pointer; font-family: inherit;
-      transition: color 0.2s;
-    }
-    .tab-btn.active { color: var(--accent); }
-    .tab-btn.active svg { transform: scale(1.15); }
-    .tab-btn svg { transition: transform 0.2s; }
-
-    /* ── Pages ── */
-    .page { display: none; padding: 0 16px; }
-    .page.active { display: block; }
-
-    /* ── Cards ── */
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--r);
-      padding: 16px;
-      margin-bottom: 10px;
-    }
-    .card-title {
-      font-size: 11px; font-weight: 700;
-      color: var(--text3);
-      text-transform: uppercase; letter-spacing: 1px;
-      margin-bottom: 14px;
-    }
-
-    /* ── Type Toggle ── */
-    .type-toggle {
-      display: grid; grid-template-columns: 1fr 1fr;
-      gap: 6px; margin-bottom: 12px;
-    }
-    .type-btn {
-      padding: 11px; border-radius: 10px;
-      border: 1px solid var(--border);
-      background: var(--surface2);
-      color: var(--text2);
-      font-size: 14px; font-weight: 600;
-      cursor: pointer; font-family: inherit;
-      transition: all 0.2s; text-align: center;
-    }
-    .type-btn.active.expense {
-      background: var(--red-dim);
-      border-color: rgba(248,113,113,0.3);
-      color: var(--red);
-    }
-    .type-btn.active.income {
-      background: var(--green-dim);
-      border-color: rgba(52,211,153,0.3);
-      color: var(--green);
-    }
-
-    /* ── Form Fields ── */
-    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
-    select, input[type="number"] {
-      width: 100%; padding: 11px 12px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      color: var(--text);
-      font-size: 14px; font-family: inherit;
-      outline: none; appearance: none; -webkit-appearance: none;
-      transition: border-color 0.2s;
-      -moz-appearance: textfield;
-    }
-    input[type="number"]::-webkit-outer-spin-button,
-    input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
-    select:focus, input:focus { border-color: var(--accent); }
-    input::placeholder { color: var(--text3); }
-
-    .btn {
-      width: 100%; padding: 13px; margin-top: 8px;
-      border: none; border-radius: 10px;
-      background: var(--accent); color: #fff;
-      font-size: 15px; font-weight: 700;
-      cursor: pointer; font-family: inherit;
-      transition: opacity 0.2s, transform 0.1s;
-    }
-    .btn:active { transform: scale(0.98); opacity: 0.85; }
-    .btn-del {
-      padding: 6px 10px; border-radius: 8px; border: none;
-      background: var(--red-dim); color: var(--red);
-      font-size: 12px; font-weight: 700;
-      cursor: pointer; font-family: inherit; flex-shrink: 0;
-    }
-
-    /* ── Operation Rows ── */
-    .op-row {
-      display: flex; align-items: center; gap: 10px;
-      padding: 11px 0;
-      border-bottom: 1px solid var(--border);
-      animation: fadeIn 0.25s ease;
-    }
-    .op-row:last-child { border-bottom: none; }
-    .op-icon {
-      width: 36px; height: 36px; border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 16px; flex-shrink: 0;
-    }
-    .op-icon.income { background: var(--green-dim); }
-    .op-icon.expense { background: var(--red-dim); }
-    .op-info { flex: 1; min-width: 0; }
-    .op-cat {
-      font-size: 14px; font-weight: 600;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .op-sector { font-size: 11px; color: var(--text2); margin-top: 1px; }
-    .op-amount {
-      font-size: 15px; font-weight: 700;
-      font-variant-numeric: tabular-nums; flex-shrink: 0;
-    }
-    .op-amount.income { color: var(--green); }
-    .op-amount.expense { color: var(--red); }
-
-    /* ── Stats Grid ── */
-    .stat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px; }
-    .stat-box {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--r); padding: 14px 10px; text-align: center;
-    }
-    .stat-label { font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
-    .stat-value { font-size: 17px; font-weight: 800; letter-spacing: -0.5px; font-variant-numeric: tabular-nums; }
-    .stat-value.green { color: var(--green); }
-    .stat-value.red   { color: var(--red); }
-
-    /* ── Plan Rows ── */
-    .plan-row {
-      padding: 12px 0;
-      border-bottom: 1px solid var(--border);
-    }
-    .plan-row:last-child { border-bottom: none; }
-    .plan-row-top { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
-    .plan-cat { font-size: 14px; font-weight: 600; flex: 1; }
-    .plan-amounts { font-size: 12px; color: var(--text2); font-variant-numeric: tabular-nums; }
-    .plan-amounts b { font-variant-numeric: tabular-nums; }
-    .progress-track { height: 5px; background: var(--surface2); border-radius: 99px; overflow: hidden; }
-    .progress-fill { height: 100%; border-radius: 99px; transition: width 0.4s ease; }
-
-    /* ── Empty / Loading ── */
-    .empty  { text-align: center; padding: 24px; color: var(--text3); font-size: 14px; }
-    .loading { text-align: center; padding: 20px; color: var(--text3); font-size: 13px; }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-  </style>
+@keyframes fadeIn { from {opacity:0; transform:translateY(6px);} to {opacity:1; transform:translateY(0);} }
+</style>
 </head>
 <body>
 <div class="app">
-
   <!-- Header -->
   <header class="header">
     <div class="header-title">Финансы</div>
     <div class="header-balance" id="hdr-balance">0 ₽</div>
   </header>
 
-  <!-- ── ОПЕРАЦИИ ── -->
+  <!-- ── Операции ── -->
   <div class="page active" id="page-ops">
     <div class="card">
       <div class="type-toggle">
         <button class="type-btn active expense" data-type="expense" onclick="setType('expense')">Расход</button>
-        <button class="type-btn income"          data-type="income"  onclick="setType('income')">Доход</button>
+        <button class="type-btn income" data-type="income" onclick="setType('income')">Доход</button>
       </div>
       <div class="field-row">
         <select id="sector" onchange="fillCategories()"></select>
@@ -249,21 +111,19 @@
       <input type="number" id="amount" placeholder="Сумма ₽" inputmode="decimal">
       <button class="btn" onclick="addOperation()">Добавить</button>
     </div>
-
     <div class="card">
       <div class="card-title">Последние операции</div>
       <div id="ops-list"><div class="loading">Загрузка…</div></div>
     </div>
   </div>
 
-  <!-- ── ПЛАНИРОВАНИЕ ── -->
+  <!-- ── Планирование ── -->
   <div class="page" id="page-plan">
     <div class="card">
       <div class="card-title">Общий бюджет на месяц</div>
       <input type="number" id="plan-total-input" placeholder="Сумма ₽" inputmode="decimal">
       <button class="btn" onclick="savePlanTotal()">Сохранить бюджет</button>
     </div>
-
     <div class="card">
       <div class="card-title">Лимит по категории</div>
       <select id="plan-sector-sel" onchange="fillPlanCats()" style="margin-bottom:8px"></select>
@@ -271,40 +131,26 @@
       <input type="number" id="plan-cat-amount" placeholder="Лимит ₽" inputmode="decimal">
       <button class="btn" onclick="savePlanCategory()">Сохранить лимит</button>
     </div>
-
     <div class="card">
       <div class="card-title">Факт vs План</div>
       <div id="plan-list"><div class="empty">Планы не заданы</div></div>
     </div>
   </div>
 
-  <!-- ── СТАТИСТИКА ── -->
+  <!-- ── Статистика ── -->
   <div class="page" id="page-stats">
     <div class="stat-grid">
-      <div class="stat-box">
-        <div class="stat-label">Доход</div>
-        <div class="stat-value green" id="stat-income">0</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-label">Расход</div>
-        <div class="stat-value red" id="stat-expense">0</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-label">Баланс</div>
-        <div class="stat-value" id="stat-balance">0</div>
-      </div>
+      <div class="stat-box"><div class="stat-label">Доход</div><div class="stat-value green" id="stat-income">0</div></div>
+      <div class="stat-box"><div class="stat-label">Расход</div><div class="stat-value red" id="stat-expense">0</div></div>
+      <div class="stat-box"><div class="stat-label">Баланс</div><div class="stat-value" id="stat-balance">0</div></div>
     </div>
-
     <div class="card">
-      <div class="card-title">Расходы по категориям</div>
-      <div style="position:relative; max-height:300px; padding: 8px 0">
-        <canvas id="chart"></canvas>
-      </div>
-      <div id="chart-empty" class="empty" style="display:none">Нет расходов для отображения</div>
+      <div class="card-title">План vs Факт по категориям</div>
+      <canvas id="chart"></canvas>
+      <div id="chart-empty" class="empty" style="display:none">Нет данных для отображения</div>
     </div>
   </div>
-
-</div><!-- /app -->
+</div>
 
 <!-- Tab Bar -->
 <nav class="tabbar">
@@ -314,307 +160,161 @@
       <polyline points="14 2 14 8 20 8"/>
       <line x1="16" y1="13" x2="8" y2="13"/>
       <line x1="16" y1="17" x2="8" y2="17"/>
-    </svg>
-    Операции
+    </svg>Операции
   </button>
   <button class="tab-btn" onclick="switchTab('plan')" id="tab-plan">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
       <line x1="16" y1="2" x2="16" y2="6"/>
-      <line x1="8"  y1="2" x2="8"  y2="6"/>
-      <line x1="3"  y1="10" x2="21" y2="10"/>
-    </svg>
-    Планирование
+      <line x1="8" y1="2" x2="8" y2="6"/>
+      <line x1="3" y1="10" x2="21" y2="10"/>
+    </svg>Планирование
   </button>
   <button class="tab-btn" onclick="switchTab('stats')" id="tab-stats">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <line x1="18" y1="20" x2="18" y2="10"/>
       <line x1="12" y1="20" x2="12" y2="4"/>
-      <line x1="6"  y1="20" x2="6"  y2="14"/>
-    </svg>
-    Статистика
+      <line x1="6" y1="20" x2="6" y2="14"/>
+    </svg>Статистика
   </button>
 </nav>
 
 <script>
-// ── Telegram ────────────────────────────────────────────────────
-if (window.Telegram?.WebApp) {
-  Telegram.WebApp.expand();
-  Telegram.WebApp.setHeaderColor('#0f0f13');
-  Telegram.WebApp.setBackgroundColor('#0f0f13');
-}
+// ── Telegram WebApp ──
+if (window.Telegram?.WebApp) { Telegram.WebApp.expand(); Telegram.WebApp.setHeaderColor('#0f0f13'); Telegram.WebApp.setBackgroundColor('#0f0f13'); }
 
-// ── Категории ───────────────────────────────────────────────────
+// ── Категории ──
 const CATS = {
   expense: {
-    'Обязательные': ['🚗 Дорога', '🏠 ЖКХ', '📱 Связь', '💳 Кредиты', '🏛 Налоги'],
-    'Переменные':   ['🛒 Продукты', '🍷 Алкоголь', '🧼 Хозяйство', '👶 Дети', '💊 Медицина', '🎮 Развлечения', '🐶 Животные'],
+    'Обязательные':['🚗 Дорога','🏠 ЖКХ','📱 Связь','💳 Кредиты','🏛 Налоги'],
+    'Переменные':['🛒 Продукты','🍷 Алкоголь','🧼 Хозяйство','👶 Дети','💊 Медицина','🎮 Развлечения','🐶 Животные']
   },
-  income: {
-    'Доход': ['💼 Зарплата', '💸 Подработка', '🎁 Подарки', '📈 Инвестиции'],
-  },
+  income: { 'Доход':['💼 Зарплата','💸 Подработка','🎁 Подарки','📈 Инвестиции'] }
 };
 
-let currentType = 'expense';
-let chartInst   = null;
+let currentType='expense', chartInst=null;
 
-// ── Утилиты ─────────────────────────────────────────────────────
-const fmt = n => Math.round(n).toLocaleString('ru-RU') + ' ₽';
+// ── Утилиты ──
+const fmt=n=>Math.round(n).toLocaleString('ru-RU')+' ₽';
+async function api(method,url,body){ const res=await fetch(url,{ method, headers:{'Content-Type':'application/json'}, body: body?JSON.stringify(body):undefined}); return res.json(); }
 
-async function api(method, url, body) {
-  const res = await fetch(url, {
-    method,
-    headers: { 'Content-Type': 'application/json' },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  return res.json();
+// ── Вкладки ──
+function switchTab(tab){ document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); document.getElementById(`page-${tab}`).classList.add('active'); document.getElementById(`tab-${tab}`).classList.add('active'); loadAll(); }
+
+// ── Тип операции ──
+function setType(type){ currentType=type; document.querySelectorAll('.type-btn').forEach(b=>b.classList.remove('active')); document.querySelector(`.type-btn[data-type="${type}"]`).classList.add('active'); fillSectors(); }
+function fillSectors(){ const sel=document.getElementById('sector'); sel.innerHTML=Object.keys(CATS[currentType]).map(s=>`<option value="${s}">${s}</option>`).join(''); fillCategories(); }
+function fillCategories(){ const sector=document.getElementById('sector').value; const cats=CATS[currentType][sector]||[]; document.getElementById('category').innerHTML=cats.map(c=>`<option value="${c}">${c}</option>`).join(''); }
+
+// ── Загрузка данных ──
+async function loadAll(){
+  const [ops, plansData] = await Promise.all([ api('GET','/api/operations'), api('GET','/api/plans') ]);
+  renderOps(ops); renderStats(ops, plansData); renderPlans(plansData);
 }
 
-// ── Вкладки ─────────────────────────────────────────────────────
-function switchTab(tab) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById(`page-${tab}`).classList.add('active');
-  document.getElementById(`tab-${tab}`).classList.add('active');
-  loadAll();
-}
-
-// ── Тип операции ────────────────────────────────────────────────
-function setType(type) {
-  currentType = type;
-  document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
-  document.querySelector(`.type-btn[data-type="${type}"]`).classList.add('active');
-  fillSectors();
-}
-
-function fillSectors() {
-  const sel = document.getElementById('sector');
-  sel.innerHTML = Object.keys(CATS[currentType])
-    .map(s => `<option value="${s}">${s}</option>`).join('');
-  fillCategories();
-}
-
-function fillCategories() {
-  const sector = document.getElementById('sector').value;
-  const cats = CATS[currentType][sector] || [];
-  document.getElementById('category').innerHTML = cats
-    .map(c => `<option value="${c}">${c}</option>`).join('');
-}
-
-// ── Загрузка данных ─────────────────────────────────────────────
-async function loadAll() {
-  const [ops, plansData] = await Promise.all([
-    api('GET', '/api/operations'),
-    api('GET', '/api/plans'),
-  ]);
-  renderOps(ops);
-  renderStats(ops);
-  renderPlans(ops, plansData);
-  updateHeader(ops);
-}
-
-// ── Шапка: баланс ───────────────────────────────────────────────
-function updateHeader(ops) {
-  let inc = 0, exp = 0;
-  ops.forEach(o => o.type === 'income' ? inc += o.amount : exp += o.amount);
-  const bal = inc - exp;
-  const el  = document.getElementById('hdr-balance');
-  el.textContent = fmt(bal);
-  el.className   = 'header-balance ' + (bal >= 0 ? 'pos' : 'neg');
-}
-
-// ── Добавить операцию ───────────────────────────────────────────
-async function addOperation() {
-  const amount = parseFloat(document.getElementById('amount').value);
-  if (!amount || amount <= 0) {
-    document.getElementById('amount').focus(); return;
-  }
-  await api('POST', '/api/operations', {
-    type:     currentType,
-    sector:   document.getElementById('sector').value,
-    category: document.getElementById('category').value,
-    amount,
-  });
-  document.getElementById('amount').value = '';
-  loadAll();
-}
-
-// ── Удалить операцию ────────────────────────────────────────────
-async function deleteOp(id) {
-  await api('DELETE', `/api/operations/${id}`);
-  loadAll();
-}
-
-// ── Рендер: список операций ─────────────────────────────────────
-function renderOps(ops) {
-  const el = document.getElementById('ops-list');
-  if (!ops.length) {
-    el.innerHTML = '<div class="empty">Нет операций</div>'; return;
-  }
-  el.innerHTML = ops.map(o => `
+// ── Операции ──
+function renderOps(ops){
+  const container=document.getElementById('ops-list');
+  if(!ops.length){ container.innerHTML='<div class="empty">Операции отсутствуют</div>'; return; }
+  container.innerHTML=ops.map(o=>`
     <div class="op-row">
-      <div class="op-icon ${o.type}">${o.type === 'income' ? '💰' : '💸'}</div>
+      <div class="op-icon ${o.type}">${o.type==='income'?'+':'−'}</div>
       <div class="op-info">
         <div class="op-cat">${o.category}</div>
         <div class="op-sector">${o.sector}</div>
       </div>
-      <div class="op-amount ${o.type}">${o.type === 'income' ? '+' : '−'}${fmt(o.amount)}</div>
-      <button class="btn-del" onclick="deleteOp(${o.id})">✕</button>
+      <div class="op-amount ${o.type}">${fmt(o.amount)}</div>
+    </div>
+  `).join('');
+  const totalBalance=ops.reduce((acc,o)=>acc+(o.type==='income'?o.amount:-o.amount),0);
+  document.getElementById('hdr-balance').textContent=fmt(totalBalance);
+}
+
+// ── Статистика ──
+function renderStats(ops, plans){
+  const income=ops.filter(o=>o.type==='income').reduce((a,o)=>a+o.amount,0);
+  const expense=ops.filter(o=>o.type==='expense').reduce((a,o)=>a+o.amount,0);
+  const balance=income-expense;
+  document.getElementById('stat-income').textContent=fmt(income);
+  document.getElementById('stat-expense').textContent=fmt(expense);
+  document.getElementById('stat-balance').textContent=fmt(balance);
+  renderChart(ops, plans);
+}
+
+// ── План-Факт Диаграмма ──
+function renderChart(ops, plans){
+  const planData={}, factData={};
+  // собираем план
+  plans.forEach(p=>{ planData[p.category]=p.amount; });
+  // собираем факт
+  ops.filter(o=>o.type==='expense').forEach(o=>{ factData[o.category]=(factData[o.category]||0)+o.amount; });
+  const categories=Object.keys({...planData,...factData});
+  if(!categories.length){ document.getElementById('chart').style.display='none'; document.getElementById('chart-empty').style.display='block'; return; }
+  document.getElementById('chart').style.display='block'; document.getElementById('chart-empty').style.display='none';
+  const planVals=categories.map(c=>planData[c]||0);
+  const factVals=categories.map(c=>factData[c]||0);
+  if(chartInst) chartInst.destroy();
+  chartInst=new Chart(document.getElementById('chart').getContext('2d'),{
+    type:'bar',
+    data:{
+      labels:categories,
+      datasets:[
+        { label:'План', data:planVals, backgroundColor:'rgba(52,211,153,0.5)', borderColor:'rgba(52,211,153,1)', borderWidth:1 },
+        { label:'Факт', data:factVals, backgroundColor:'rgba(248,113,113,0.5)', borderColor:'rgba(248,113,113,1)', borderWidth:1 }
+      ]
+    },
+    options:{ responsive:true, plugins:{ legend:{ position:'bottom' } }, scales:{ y:{ beginAtZero:true } } }
+  });
+}
+
+// ── Добавление операции ──
+async function addOperation(){
+  const sector=document.getElementById('sector').value;
+  const category=document.getElementById('category').value;
+  const amount=parseFloat(document.getElementById('amount').value);
+  if(!category||!amount){ alert('Введите корректные данные'); return; }
+  await api('POST','/api/operations',{type:currentType,sector,category,amount});
+  document.getElementById('amount').value='';
+  loadAll();
+}
+
+// ── Планирование ──
+function renderPlans(plans){
+  const container=document.getElementById('plan-list');
+  if(!plans.length){ container.innerHTML='<div class="empty">Планы не заданы</div>'; return; }
+  container.innerHTML=plans.map(p=>`
+    <div class="plan-row">
+      <div class="plan-row-top">
+        <div class="plan-cat">${p.category}</div>
+        <div class="plan-amounts">План: <b>${fmt(p.amount)}</b></div>
+      </div>
     </div>
   `).join('');
 }
 
-// ── Планирование ────────────────────────────────────────────────
-function fillPlanSectors() {
-  const sel = document.getElementById('plan-sector-sel');
-  sel.innerHTML = Object.keys(CATS.expense)
-    .map(s => `<option value="${s}">${s}</option>`).join('');
-  fillPlanCats();
+// ── Сохранение плана ──
+async function savePlanTotal(){
+  const total=parseFloat(document.getElementById('plan-total-input').value);
+  if(!total){ alert('Введите корректную сумму'); return; }
+  await api('POST','/api/plans',{category:'Общий бюджет',amount:total});
+  loadAll();
 }
-
-function fillPlanCats() {
-  const sector = document.getElementById('plan-sector-sel').value;
-  const cats   = CATS.expense[sector] || [];
-  document.getElementById('plan-cat-sel').innerHTML = cats
-    .map(c => `<option value="${c}">${c}</option>`).join('');
-}
-
-async function savePlanTotal() {
-  const amount = parseFloat(document.getElementById('plan-total-input').value);
-  if (!amount || amount <= 0) return;
-  await api('POST', '/api/plans/total', { amount });
+async function savePlanCategory(){
+  const category=document.getElementById('plan-cat-sel').value;
+  const amount=parseFloat(document.getElementById('plan-cat-amount').value);
+  if(!category||!amount){ alert('Введите корректные данные'); return; }
+  await api('POST','/api/plans',{category,amount});
+  document.getElementById('plan-cat-amount').value='';
   loadAll();
 }
 
-async function savePlanCategory() {
-  const category = document.getElementById('plan-cat-sel').value;
-  const amount   = parseFloat(document.getElementById('plan-cat-amount').value);
-  if (!category || !amount || amount <= 0) return;
-  await api('POST', '/api/plans/category', { type: 'expense', category, amount });
-  document.getElementById('plan-cat-amount').value = '';
-  loadAll();
-}
-
-async function deletePlan(id) {
-  await api('DELETE', `/api/plans/${id}`);
-  loadAll();
-}
-
-// ── Рендер: планы ───────────────────────────────────────────────
-function renderPlans(ops, { plans, total }) {
-  if (total) document.getElementById('plan-total-input').value = total;
-
-  // Фактические расходы по категориям
-  const fact = {};
-  ops.filter(o => o.type === 'expense').forEach(o => {
-    fact[o.category] = (fact[o.category] || 0) + o.amount;
-  });
-
-  const el = document.getElementById('plan-list');
-  if (!plans.length) {
-    el.innerHTML = '<div class="empty">Планы не заданы</div>'; return;
-  }
-
-  el.innerHTML = plans.map(p => {
-    const spent = fact[p.category] || 0;
-    const pct   = p.amount > 0 ? Math.min((spent / p.amount) * 100, 100) : 0;
-    const over  = spent > p.amount;
-    const color = over ? 'var(--red)' : pct > 75 ? 'var(--yellow)' : 'var(--green)';
-    return `
-      <div class="plan-row">
-        <div class="plan-row-top">
-          <div class="plan-cat">${p.category}</div>
-          <div class="plan-amounts" style="color:${over ? 'var(--red)' : 'var(--text2)'}">
-            <b>${fmt(spent)}</b> / ${fmt(p.amount)}
-          </div>
-          <button class="btn-del" onclick="deletePlan(${p.id})">✕</button>
-        </div>
-        <div class="progress-track">
-          <div class="progress-fill" style="width:${pct}%; background:${color}"></div>
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
-// ── Рендер: статистика ──────────────────────────────────────────
-function renderStats(ops) {
-  let income = 0, expense = 0;
-  const byCat = {};
-  ops.forEach(o => {
-    if (o.type === 'income') {
-      income += o.amount;
-    } else {
-      expense += o.amount;
-      byCat[o.category] = (byCat[o.category] || 0) + o.amount;
-    }
-  });
-
-  const bal   = income - expense;
-  const balEl = document.getElementById('stat-balance');
-
-  document.getElementById('stat-income').textContent  = fmt(income);
-  document.getElementById('stat-expense').textContent = fmt(expense);
-  balEl.textContent = fmt(bal);
-  balEl.className   = 'stat-value ' + (bal >= 0 ? 'green' : 'red');
-
-  renderChart(byCat);
-}
-
-// ── Рендер: график ──────────────────────────────────────────────
-function renderChart(byCat) {
-  const labels = Object.keys(byCat);
-  const values = Object.values(byCat);
-  const empty  = document.getElementById('chart-empty');
-
-  if (chartInst) { chartInst.destroy(); chartInst = null; }
-
-  if (!labels.length) {
-    empty.style.display = 'block'; return;
-  }
-  empty.style.display = 'none';
-
-  const colors = ['#6366f1','#34d399','#f87171','#facc15','#a78bfa','#38bdf8','#fb923c','#4ade80','#f472b6','#94a3b8'];
-
-  chartInst = new Chart(document.getElementById('chart'), {
-    type: 'doughnut',
-    data: {
-      labels,
-      datasets: [{
-        data: values,
-        backgroundColor: colors.slice(0, labels.length),
-        borderWidth: 0,
-        hoverOffset: 8,
-      }],
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: {
-          position: 'bottom',
-          labels: {
-            color: '#7a7a95',
-            font: { size: 12, family: '-apple-system' },
-            padding: 14,
-            boxWidth: 10, boxHeight: 10,
-            usePointStyle: true, pointStyle: 'circle',
-          },
-        },
-        tooltip: {
-          callbacks: {
-            label: ctx => ` ${ctx.label}: ${fmt(ctx.raw)}`,
-          },
-        },
-      },
-      cutout: '62%',
-    },
-  });
-}
-
-// ── Инициализация ────────────────────────────────────────────────
-fillSectors();
-fillPlanSectors();
-loadAll();
+// ── Selects Plan ──
+function fillPlanCats(){ const sector=document.getElementById('plan-sector-sel').value; document.getElementById('plan-cat-sel').innerHTML=(CATS.expense[sector]||[]).map(c=>`<option value="${c}">${c}</option>`).join(''); }
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('plan-sector-sel').innerHTML=Object.keys(CATS.expense).map(s=>`<option value="${s}">${s}</option>`).join('');
+  fillPlanCats(); fillSectors(); loadAll();
+});
 </script>
 </body>
 </html>
+Обновление интерфейса калькулятора: новые функции и статистика
